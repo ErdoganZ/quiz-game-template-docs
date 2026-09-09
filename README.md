@@ -140,6 +140,12 @@ because those names are what the data is matched against at runtime. Read
 [3.3](#33-images-are-matched-by-filename--the-most-important-rule) before renaming anything
 under `Resources/`.
 
+The one exception is `Plugins/TextMeshPro/`. Those are Unity's own **TMP Essential Resources**,
+shipped exactly as Unity writes them — `Fonts & Materials/`, `TMP Settings.asset`,
+`TMP_SDF-Mobile Overlay.shader` and the rest. TextMesh Pro looks several of them up by exact
+string (`TMP_Settings.defaultFontAssetPath` is literally `"Fonts & Materials/"`), so renaming
+them breaks text rendering. Leave that folder alone.
+
 > **Scene names are hardcoded** in `SceneManager.LoadScene("...")` calls across the scripts, plus one
 > `scene.name` comparison in `AdsManager.cs`. There are 23 such references. If you rename a scene,
 > update every one of them **and** the build settings, or the game will break at runtime.
