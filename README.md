@@ -18,7 +18,7 @@ visual clues."
 | [7. Audio](#7-audio--bring-your-own) | Empty by design — where to drop your clips |
 | [8. Localization](#8-localization-english--turkish) | The EN/TR string system |
 | [9. Branding and building](#9-branding-package-name-and-building) | Rename the app, Android and iOS builds |
-| [10. Troubleshooting](#10-troubleshooting) | Expected console errors, common problems |
+| [10. Troubleshooting](#10-troubleshooting) | Expected console warnings, common problems |
 | [11. What's included](#11-whats-included) | Feature list, and what is deliberately not included |
 | **[12. Customization reference](#12-customization-reference--what-you-can-change-and-where)** | **Every file and line you are meant to edit — and the few you should not** |
 
@@ -42,32 +42,35 @@ triggers an asset upgrade that can break serialized scene references.
 
 ### First launch
 
-The product is a single `.unitypackage`. It carries everything under `Assets/`, but Unity's package
+The product ships as a single package. It carries everything under `Assets/`, but the Unity package
 format cannot carry `Packages/manifest.json`, the render pipeline assignment, Active Input Handling,
 the screen orientation or the Build Settings scene list. One menu item supplies all five.
 
 1. Create a new **2D (URP)** project in Unity 6000.0.62f1, or open the project you want to add the
    template to.
-2. **Assets → Import Package → Custom Package…**, choose `QuizGameTemplate.unitypackage`, and import
-   everything.
-3. Unity reports compiler errors. **This is expected** — the scripts reference packages your project
-   does not have yet, and a warning in the console says so.
-4. Run **Tools ▸ Quiz Game Template ▸ Apply Project Setup**. It adds the missing packages to your
+2. Import the template. From the Asset Store, use **Window → Package Manager → My Assets**; from a
+   downloaded file, use **Assets → Import Package → Custom Package…** and import everything.
+3. What happens next depends on how you got it. The Asset Store copy declares the ten packages it
+   needs as dependencies, so Unity installs them during the import and everything compiles straight
+   away. A plain `.unitypackage` cannot carry that list, so there you will see compiler errors at
+   this point — **expected**, and a console warning says why.
+4. Run **Tools ▸ Quiz Game Template ▸ Apply Project Setup**. It adds any missing packages to your
    manifest, assigns the render pipeline, sets Active Input Handling and the screen orientation, and
-   fills in Build Settings. Unity restores the packages, recompiles, and the errors clear.
+   fills in Build Settings. If packages had to be added, Unity restores them, recompiles, and the
+   errors clear.
 5. Open `Assets/QuizGameTemplate/Scenes/SplashScene.unity` and press **Play**.
 
-Step 4 needs an internet connection — the LootLocker SDK is fetched from its official Git
-repository. **Tools ▸ Quiz Game Template ▸ Verify Project Setup** prints an OK/FAIL line for each of
-the five items and changes nothing, so you can re-check the state at any time.
+Step 4 needs an internet connection — Unity downloads the packages from its own registry.
+**Tools ▸ Quiz Game Template ▸ Verify Project Setup** prints an OK/FAIL line for each of the five
+items and changes nothing, so you can re-check the state at any time.
 
 > ### Input handling — why *Active Input Handling* ships as `Both`
 >
 > This template uses the **old** input API. There are four calls in total, all `Input.GetKeyDown`:
 > the Android back button in `GameManager.cs`, `MenuManager.cs` and `LevelSelectManager.cs`, and
 > the screenshot key in `ScreenshotTaker.cs`. Nothing in the project uses the new Input System — no
-> scene or prefab uses `InputSystemUIInputModule`, and `InputSystem_Actions.inputactions` is
-> unreferenced.
+> scene or prefab uses `InputSystemUIInputModule`, which is why the template ships no
+> `.inputactions` asset at all.
 >
 > The Input System package is still listed in `manifest.json`, so *Active Input Handling*
 > (Project Settings → Player → Other Settings) ships set to **Both**. That keeps the existing code
@@ -113,14 +116,13 @@ Assets/
 │   ├── Fonts/                     TextMeshPro font assets (F_*)
 │   ├── Animations/                clips (A_*) and animator controllers (AC_*)
 │   ├── Audio/                     empty — drop your own clips here (section 7)
-│   ├── Settings/                  URP assets, volume profile, input actions
+│   ├── Settings/                  URP pipeline asset, 2D renderer, volume profile
 │   ├── Editor/                    one-click project setup — safe to delete, see below
 │   ├── Documentation/             this file
 │   └── Plugins/                   third-party SDKs, as their publishers ship them
 │       ├── GoogleMobileAds/          AdMob
 │       ├── ExternalDependencyManager/  Google's dependency resolver (EDM4U)
-│       ├── LevelPlay/                ad mediation adapters
-│       ├── LootLockerSDK/            the config asset only; the SDK itself is a package
+│       ├── LootLockerSDK/            the LootLocker SDK (v8.1.1, MIT) and its config asset
 │       └── TextMeshPro/              TMP essential resources
 ├── Plugins/                       Android / iOS native plugins and Gradle templates
 ├── Resources/                     Unity IAP's own BillingMode.json + IAPProductCatalog.json
@@ -464,8 +466,13 @@ you connect your own project.
    key the template uses — it is defined at `Assets/QuizGameTemplate/Scripts/LootLockerManager.cs:10`. Either name
    your leaderboard to match, or change that line to your own key.
 
-The SDK itself is pulled as a package from `https://github.com/LootLocker/unity-sdk.git`
-(see `Packages/manifest.json`) — it is not vendored into `Assets/`.
+The SDK itself (v8.1.1, MIT licence) ships inside this package, at
+`Assets/QuizGameTemplate/Plugins/LootLockerSDK/`. It is included rather than referenced because
+LootLocker distributes it as a Git URL, which a `.unitypackage` cannot declare as a dependency.
+If you would rather track the upstream package, delete that folder first — keeping both copies
+would give you the same classes twice and the project would not compile — and then add
+`https://github.com/LootLocker/unity-sdk.git` through **Window ▸ Package Manager ▸ + ▸ Add package
+from git URL**. Only the SDK's `Runtime` folder is included; its samples and tests are not.
 
 If you don't want online features, you can leave the keys empty; the rest of the game works offline.
 
@@ -722,19 +729,21 @@ To add a third language, add a field to the `LocalizationItem` class and extend 
 
 ## 10. Troubleshooting
 
-### Console errors on a fresh install — this is expected
+### Console warnings on a fresh install — this is expected
 
 The template ships with **no credentials of any kind**, by design. Until you connect your own
-services (sections 4–6), the console will show errors on first play. **Expect exactly 11 of them**
-— that is the normal, verified state of a fresh import. All are configuration messages, not
-defects, and there should be **zero warnings**:
+services (sections 4–6), the console will show warnings on first play. **Expect exactly four of
+them, and zero errors** — that is the normal, verified state of a fresh import. All four are
+configuration messages, not defects:
 
 | Message | Goes away when you… |
 |---|---|
-| `UnityProjectNotLinkedException` / `Unity Services could not be initialized` | Link the project to your own Unity organization: **Edit → Project Settings → Services** |
+| `Unity Services could not be initialized` | Link the project to your own Unity organization: **Edit → Project Settings → Services** |
 | `Unity Analytics could not start` | Same — Analytics rides on the Unity Services link above |
-| `CodelessIAPStoreListener attempted to get unknown product coins_1000…` (5 of these, one per product) | Link Unity Services and create the matching IAP products (section 6) |
-| `game_api_key missing from payload` / `LootLocker guest login failed` | Enter your LootLocker keys (section 4) |
+| `InAppPurchasing: IStoreService.Connect called without a callback…` | Link Unity Services and create the matching IAP products (section 6) |
+| `LootLocker is not configured…` | Enter your LootLocker API key (section 4) |
+
+If you see an *error* rather than a warning, something really is wrong — that is worth reporting.
 
 The core game — all three modes, levels, hints, achievements, localization — runs fine without any
 of this configured.
@@ -897,8 +906,7 @@ The language selector is in-game — Settings → language button — and the ch
 | **Method names wired to buttons** | An `OnClick` entry stores the method **name as text**. Renaming the method leaves the button pointing at nothing — again with no error | Rename in code, then reassign that button's `OnClick` entry in the Inspector |
 | **Image filenames under `Resources/`** | They are loaded by name at runtime, never by reference. A typo gives you a blank image and a console warning, not an error | Section 3.3 |
 | **`.meta` files** | They carry the GUIDs that hold every reference in the project together | Never delete or hand-edit them. Move and rename assets **from inside Unity**, which keeps each `.meta` with its file |
-| `Scripts/UnityPurchasing/generated/GooglePlayTangle.cs` | Generated by Unity IAP from your own Google Play licence key | Regenerate it from *Services → In-App Purchasing → Receipt Validation*. Never hand-edit it |
-| `QuizGameTemplate/Plugins/` (LootLockerSDK, GoogleMobileAds, LevelPlay, ExternalDependencyManager, TextMeshPro) and `Assets/Plugins/` | Third-party SDKs, sitting at the paths their own importers require | Update them through their own importer or package, and leave the folder locations alone |
+| `QuizGameTemplate/Plugins/` (LootLockerSDK, GoogleMobileAds, ExternalDependencyManager, TextMeshPro) and `Assets/Plugins/` | Third-party SDKs, sitting at the paths their own importers require | Update them through their own importer or package, and leave the folder locations alone |
 
 ---
 
