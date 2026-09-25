@@ -106,6 +106,7 @@ Assets/
 │   ├── Resources/
 │   │   ├── quiz_data.json         Question database
 │   │   ├── team_colors.json       Team / category database
+│   │   ├── IAPProductCatalog.json Unity IAP product catalog (section 6)
 │   │   ├── Flags/                 Nationality images    (237 files, T_Flag_*)
 │   │   ├── Jerseys/               Jersey number images   (99 files, T_Jersey_*)
 │   │   ├── Trophies/              Position icons          (4 files, T_Position_* — see 3.3)
@@ -125,7 +126,6 @@ Assets/
 │       ├── LootLockerSDK/            the LootLocker SDK (v8.1.1, MIT) and its config asset
 │       └── TextMeshPro/              TMP essential resources
 ├── Plugins/                       Android / iOS native plugins and Gradle templates
-├── Resources/                     Unity IAP's own BillingMode.json + IAPProductCatalog.json
 └── StreamingAssets/               empty — Unity recreates it on open
 ```
 
@@ -472,7 +472,8 @@ LootLocker distributes it as a Git URL, which a `.unitypackage` cannot declare a
 If you would rather track the upstream package, delete that folder first — keeping both copies
 would give you the same classes twice and the project would not compile — and then add
 `https://github.com/LootLocker/unity-sdk.git` through **Window ▸ Package Manager ▸ + ▸ Add package
-from git URL**. Only the SDK's `Runtime` folder is included; its samples and tests are not.
+from git URL**. Only the SDK's `Runtime` folder and its `package.json` are included; its samples
+and tests are not.
 
 If you don't want online features, you can leave the keys empty; the rest of the game works offline.
 
@@ -574,7 +575,12 @@ skip all of this permanently.
 ## 6. In-app purchases
 
 Unity IAP (`com.unity.purchasing`) is integrated. Products are defined in
-`Assets/Resources/IAPProductCatalog.json`:
+`Assets/QuizGameTemplate/Resources/IAPProductCatalog.json`:
+
+> Unity IAP finds this file through `Resources.Load`, so it works from any `Resources` folder — it
+> does not have to sit at `Assets/Resources/`. You will see a second file there, `BillingMode.json`,
+> that this package does not ship: Unity IAP writes it into your project by itself and keeps it
+> up to date. Leave it alone.
 
 | Product ID | Type | Purpose |
 |---|---|---|
@@ -775,7 +781,7 @@ offline players costs you sessions for no benefit. Two ways to relax it:
 | A flag, jersey or award image doesn't appear | The filename in `Resources/` doesn't exactly match the JSON value. The engine hides missing sprites silently. |
 | Team colors are gray and the city shows `???` | The `currentTeam` value has no matching `TeamName` in `team_colors.json`. |
 | Leaderboard is empty or errors | LootLocker `apiKey`/`domainKey` not set — see section 4. |
-| Package Manager can't resolve LootLocker | No internet on first import — the SDK is fetched from GitHub. |
+| Package Manager can't resolve a package on import | No internet on first import — the ten required Unity packages are downloaded from the Unity registry. Reconnect and run **Tools ▸ Quiz Game Template ▸ Apply Project Setup**. |
 | **Back button and screenshot key do nothing** | *Active Input Handling* has been changed to **Input System Package (New)** on its own. Set Project Settings → Player → **Active Input Handling** back to **Both** (the value this template ships with) and restart the editor. See section 1. |
 | Only a few levels exist | The sample database ships with a handful of placeholder entries. Add your own — one array entry per level. |
 
@@ -824,7 +830,7 @@ value matches the C# default listed here, so the two agree until you change one.
 | LootLocker API key + domain key | `Assets/QuizGameTemplate/Plugins/LootLockerSDK/Resources/Config/LootLockerConfig.asset`, or the LootLocker settings window | **empty** — leaderboards and friends stay offline until set (section 4) |
 | AdMob app ID | `Assets/QuizGameTemplate/Plugins/GoogleMobileAds/Resources/GoogleMobileAdsSettings.asset` line 15, or *Assets → Google Mobile Ads → Settings* | Google's public **test** app ID |
 | AdMob banner / interstitial / rewarded unit IDs | `Scripts/AdsManager.cs` lines **24, 25, 26** — *code-only* | Google's public **test** unit IDs |
-| IAP product IDs | `Assets/Resources/IAPProductCatalog.json` | `coins_1000`, `coins_2500`, `coins_5000`, `coins_10000`, `remove_ads` — these must match the products you create in Google Play / App Store (section 6) |
+| IAP product IDs | `Assets/QuizGameTemplate/Resources/IAPProductCatalog.json` | `coins_1000`, `coins_2500`, `coins_5000`, `coins_10000`, `remove_ads` — these must match the products you create in Google Play / App Store (section 6) |
 | Share / rate link | `Scripts/GameManager.cs` line **126** (`shareLink`, on **GameManager** in `GameScene` and `MainMenu`) | a `com.yourcompany.quiztemplate` placeholder URL |
 | Package name, app name, icon, signing | *Project Settings → Player* | placeholder values (section 9) |
 
