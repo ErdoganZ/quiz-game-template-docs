@@ -13,7 +13,7 @@ visual clues."
 | [2. Project structure](#2-project-structure) | Folder tree, the setup menu, naming and language, script index |
 | [3. The data system](#3-the-data-system--read-this-first) | How questions, images and levels fit together — **read this first** |
 | [4. Backend setup — LootLocker](#4-backend-setup--lootlocker-leaderboards) | Leaderboards, friends, name moderation |
-| [5. Ads — Google AdMob](#5-ads--google-admob) | Unit IDs, mediation, how often ads appear |
+| [5. Ads — Google AdMob](#5-ads--google-admob) | Installing the ad plugin, unit IDs, how often ads appear |
 | [6. In-app purchases](#6-in-app-purchases) | Product IDs, restore purchases |
 | [7. Audio](#7-audio--bring-your-own) | Empty by design — where to drop your clips |
 | [8. Localization](#8-localization-english--turkish) | The EN/TR string system |
@@ -42,27 +42,37 @@ triggers an asset upgrade that can break serialized scene references.
 
 ### First launch
 
-The product ships as a single package. It carries everything under `Assets/`, but the Unity package
-format cannot carry `Packages/manifest.json`, the render pipeline assignment, Active Input Handling,
-the screen orientation or the Build Settings scene list. One menu item supplies all five.
+The product ships as a single package. It carries everything under `Assets/QuizGameTemplate/`, but
+the Unity package format cannot carry `Packages/manifest.json`, the render pipeline assignment,
+Active Input Handling, the screen orientation or the Build Settings scene list, and TextMesh Pro's
+Essential Resources come from Unity itself. One menu item supplies all six.
 
 1. Create a new **2D (URP)** project in Unity 6000.0.62f1, or open the project you want to add the
    template to.
 2. Import the template. From the Asset Store, use **Window → Package Manager → My Assets**; from a
    downloaded file, use **Assets → Import Package → Custom Package…** and import everything.
-3. What happens next depends on how you got it. The Asset Store copy declares the ten packages it
+3. What happens next depends on how you got it. The Asset Store copy declares the nine packages it
    needs as dependencies, so Unity installs them during the import and everything compiles straight
    away. A plain `.unitypackage` cannot carry that list, so there you will see compiler errors at
    this point — **expected**, and a console warning says why.
 4. Run **Tools ▸ Quiz Game Template ▸ Apply Project Setup**. It adds any missing packages to your
-   manifest, assigns the render pipeline, sets Active Input Handling and the screen orientation, and
-   fills in Build Settings. If packages had to be added, Unity restores them, recompiles, and the
-   errors clear.
+   manifest, assigns the render pipeline, sets Active Input Handling and the screen orientation,
+   fills in Build Settings and imports TextMesh Pro's Essential Resources from Unity's own uGUI
+   package (into `Assets/TextMesh Pro/`, where Unity always puts them). If packages had to be added,
+   Unity restores them, recompiles, and the errors clear.
+   The TMP Essential Resources are in fact imported automatically the moment the template's editor
+   script first loads, so TextMesh Pro's own "TMP Importer" window never needs to appear; the menu
+   simply repeats that step if they are ever missing.
 5. Open `Assets/QuizGameTemplate/Scenes/SplashScene.unity` and press **Play**.
 
 Step 4 needs an internet connection — Unity downloads the packages from its own registry.
-**Tools ▸ Quiz Game Template ▸ Verify Project Setup** prints an OK/FAIL line for each of the five
+**Tools ▸ Quiz Game Template ▸ Verify Project Setup** prints an OK/FAIL line for each of the six
 items and changes nothing, so you can re-check the state at any time.
+
+**Ads are optional and not included.** The Google Mobile Ads plugin is Google's own product, so it
+is not part of this package. Without it the game is fully playable: ads run in *simulation mode* —
+rewarded ads grant their reward at once, banners and interstitials are skipped. Install the plugin
+when you want real ads; [section 5](#5-ads--google-admob) walks through it.
 
 > ### Input handling — why *Active Input Handling* ships as `Both`
 >
@@ -120,20 +130,16 @@ Assets/
 │   ├── Settings/                  URP pipeline asset, 2D renderer, volume profile
 │   ├── Editor/                    one-click project setup — safe to delete, see below
 │   ├── Documentation/             this file
-│   └── Plugins/                   third-party SDKs, as their publishers ship them
-│       ├── GoogleMobileAds/          AdMob
-│       ├── ExternalDependencyManager/  Google's dependency resolver (EDM4U)
+│   └── Plugins/                   open-source SDKs, as their publishers ship them
 │       ├── LootLockerSDK/            the LootLocker SDK (v8.1.1, MIT) and its config asset
-│       └── TextMeshPro/              TMP essential resources
-├── Plugins/                       Android / iOS native plugins and Gradle templates
-└── StreamingAssets/               empty — Unity recreates it on open
+│       └── NativeShare/              yasirkula's Native Share (MIT) — the share button
+└── TextMesh Pro/                  created by Apply Project Setup — Unity's own TMP resources
 ```
 
-Everything the template owns is under `QuizGameTemplate/`. The three folders left beside it —
-`Plugins`, `Resources` and `StreamingAssets` — are Unity **special folders**: their names carry
-meaning to the engine (native plugin handling, `Resources.Load`, streamed files), so they have to
-stay where they are. They hold Unity IAP's generated catalog and the native Android/iOS libraries
-the ad SDK needs.
+The package installs nothing outside `Assets/QuizGameTemplate/`. `TextMesh Pro/` is written by
+Unity's own TMP importer, which always uses that path. If you install the Google Mobile Ads plugin
+(section 5), its importer adds `GoogleMobileAds/`, `ExternalDependencyManager/` and
+`Plugins/Android` / `Plugins/iOS` next to it — those locations are Google's, not the template's.
 
 **Asset naming.** Every asset carries a prefix for its type: `T_` textures, `P_` prefabs, `A_`
 animation clips, `AC_` animator controllers, `F_` fonts. Textures also carry a category —
@@ -142,11 +148,10 @@ because those names are what the data is matched against at runtime. Read
 [3.3](#33-images-are-matched-by-filename--the-most-important-rule) before renaming anything
 under `Resources/`.
 
-The one exception is `Plugins/TextMeshPro/`. Those are Unity's own **TMP Essential Resources**,
-shipped exactly as Unity writes them — `Fonts & Materials/`, `TMP Settings.asset`,
-`TMP_SDF-Mobile Overlay.shader` and the rest. TextMesh Pro looks several of them up by exact
-string (`TMP_Settings.defaultFontAssetPath` is literally `"Fonts & Materials/"`), so renaming
-them breaks text rendering. Leave that folder alone.
+`Assets/TextMesh Pro/` is the exception to the prefixes. Those are Unity's own **TMP Essential
+Resources** — `Fonts & Materials/`, `TMP Settings.asset`, the SDF shaders and the rest. TextMesh
+Pro looks several of them up by exact string (`TMP_Settings.defaultFontAssetPath` is literally
+`"Fonts & Materials/"`), so renaming them breaks text rendering. Leave that folder alone.
 
 > **Scene names are hardcoded** in `SceneManager.LoadScene("...")` calls across the scripts, plus one
 > `scene.name` comparison in `AdsManager.cs`. There are 23 such references. If you rename a scene,
@@ -155,20 +160,28 @@ them breaks text rendering. Leave that folder alone.
 **About `Editor/`.** `Editor/QuizTemplateSetup.cs` is the setup step from
 [section 1](#first-launch). Unity's package format can only carry the contents of `Assets/`, so it
 cannot bring `Packages/manifest.json`, the render pipeline assignment, Active Input Handling, the
-screen orientation or the Build Settings scene list. This script supplies all five from a menu:
+screen orientation or the Build Settings scene list. This script supplies all five from a menu, and
+imports TextMesh Pro's Essential Resources as the sixth:
 
 - **Tools ▸ Quiz Game Template ▸ Apply Project Setup** — adds the missing packages to your manifest
   (it only *adds*; a package you already have at another version is left alone), assigns
   `Settings/UniversalRP.asset`, sets Active Input Handling to Both and the orientation to Portrait,
-  and puts the six scenes in Build Settings with `SplashScene` first.
+  puts the six scenes in Build Settings with `SplashScene` first, and imports the TMP Essential
+  Resources if they are missing.
 - **Tools ▸ Quiz Game Template ▸ Verify Project Setup** — prints an OK/FAIL line for each of those
-  five, and changes nothing.
+  six, plus an INFO line saying whether ads are real or simulated, and changes nothing.
+
+It also switches the ads on by itself. Whenever the editor loads, it checks whether the Google Mobile
+Ads plugin is in the project and adds or removes the `QGT_ADMOB` scripting define to match
+(Android, iOS and Standalone). `AdsManager.cs` compiles its AdMob code only when that define is set.
 
 It sits in its own assembly definition so that it still compiles while the gameplay scripts cannot —
 which is exactly the state a freshly imported `.unitypackage` leaves the project in.
 
-Once setup has run, the folder has done its job. *Verify Project Setup* will keep reporting that
-there is nothing to do, and you can delete `Editor/` before you ship your own game.
+Once setup has run and the ad plugin is in the state you want, the folder has done its job, and you
+can delete `Editor/` before you ship your own game. The `QGT_ADMOB` define stays in your player
+settings; if you later add or remove the ad plugin, set or clear it by hand in
+*Project Settings → Player → Scripting Define Symbols*.
 
 ### 2.1 Naming and language
 
@@ -210,7 +223,7 @@ All 53 runtime scripts live in `Assets/QuizGameTemplate/Scripts/`. The ones you 
 | `GameManager.UI.cs` | UI updates, panels, animations |
 | `LevelManager.cs` | Loads both JSON files, owns the level list and the data model classes |
 | `LocalizationManager.cs` | The whole EN/TR dictionary — every string lives here |
-| `AdsManager.cs` | AdMob / LevelPlay wiring |
+| `AdsManager.cs` | AdMob wiring — simulated until the Google Mobile Ads plugin is installed (section 5) |
 | `ShopManager.cs` | Shop, coin packs, IAP |
 | `LootLockerManager.cs` | Backend calls — leaderboard, friends, player accounts |
 | `AchievementManager.cs` | Achievement definitions and unlock checks |
@@ -529,6 +542,32 @@ placeholder names, edit them in the Inspector to suit your theme.
 
 ## 5. Ads — Google AdMob
 
+The ad code is complete, but **the Google Mobile Ads Unity plugin is not included** — it is
+Google's product, and you install it yourself. Until you do, `AdsManager` runs in
+**simulation mode**: rewarded ads grant their reward at once, banners and interstitials are skipped,
+and the console shows one warning saying so. Every ad-driven feature (hints, the daily reward, the
+`0/5` counter) can be tested that way.
+
+### Installing the plugin
+
+1. Download the Google Mobile Ads Unity plugin `.unitypackage` from its official releases page,
+   <https://github.com/googleads/googleads-mobile-unity/releases>. The template was built and tested
+   with **v10.7.0**.
+2. Import it with **Assets → Import Package → Custom Package…** and import everything. It brings
+   Google's External Dependency Manager (EDM4U) with it, which resolves the Android and iOS native
+   libraries. If EDM4U asks to enable Android auto-resolution or custom Gradle templates, answer
+   **Yes**.
+3. That is all the wiring. When Unity finishes compiling, `Editor/QuizTemplateSetup.cs` sees the
+   plugin and adds the `QGT_ADMOB` scripting define, and the console says so. `AdsManager` then
+   loads real ads — Google's test ads, until you change the IDs below.
+   **Tools ▸ Quiz Game Template ▸ Verify Project Setup** confirms which mode is active.
+
+If you use a different ad network instead, leave the plugin out and replace the bodies of
+`ShowRewardedAd`, `ShowInterstitial` and the banner methods in `AdsManager.cs` — every other script
+only calls those.
+
+### Your own IDs
+
 The template ships with **Google's official test ad unit IDs**. You must replace them before
 publishing, or you will show test ads in production.
 
@@ -538,14 +577,10 @@ publishing, or you will show test ads in production.
    private string interstitialID = "ca-app-pub-3940256099942544/1033173712";
    private string rewardedID     = "ca-app-pub-3940256099942544/5224354917";
    ```
-2. Set your AdMob **App ID** in `Assets/QuizGameTemplate/Plugins/GoogleMobileAds/Resources/GoogleMobileAdsSettings.asset`
-   (also currently a Google test ID).
+2. Set your AdMob **App ID** in **Assets → Google Mobile Ads → Settings**.
 
 > **Never ship someone else's ad unit IDs.** Doing so sends revenue to another account and can get
 > your AdMob account suspended for invalid traffic.
-
-LevelPlay (ironSource) mediation is also integrated and unconfigured — set it up from
-**Ads Mediation** in the Unity menu bar if you want mediation, or ignore it to use AdMob alone.
 
 ### How often ads appear
 
@@ -667,7 +702,7 @@ To add a third language, add a field to the `LocalizationItem` class and extend 
 > If you do not want analytics, delete those two lines from `LocalizationManager.Start()` and
 > remove `com.unity.services.analytics` from `Packages/manifest.json`. Nothing else in the template
 > uses them. If you do want analytics, gate `StartDataCollection()` behind your own consent flow —
-> AdMob's UMP consent form, which already ships with the ad SDK, is the usual place to hang it.
+> AdMob's UMP consent form, which comes with the Google Mobile Ads plugin (section 5), is the usual place to hang it.
 
 > ### ⚠ A second place can define strings — and it wins
 >
@@ -722,8 +757,8 @@ To add a third language, add a field to the `LocalizationItem` class and extend 
 >
 > What is in place: `NotificationManager` has complete iOS code paths, including the
 > `AuthorizationRequest` permission flow, scheduling and cancellation. `AudioManager.TriggerHaptics()` is
-> guarded for both platforms. AdMob ships its iOS native plugin (`Assets/Plugins/iOS`), its
-> `SKAdNetworkItems` list and the CocoaPods resolver. Unity IAP, LevelPlay and LootLocker all
+> guarded for both platforms. The Google Mobile Ads plugin (section 5) brings its iOS native plugin, its
+> `SKAdNetworkItems` list and the CocoaPods resolver. Unity IAP and LootLocker both
 > support iOS. There is no Android-only branch left without an iOS counterpart.
 >
 > What has never happened: an actual iOS build. No Xcode archive, no device run, no App Store IAP
@@ -738,9 +773,9 @@ To add a third language, add a field to the `LocalizationItem` class and extend 
 ### Console warnings on a fresh install — this is expected
 
 The template ships with **no credentials of any kind**, by design. Until you connect your own
-services (sections 4–6), the console will show warnings on first play. **Expect exactly four of
-them, and zero errors** — that is the normal, verified state of a fresh import. All four are
-configuration messages, not defects:
+services (sections 4–6) and install the ad plugin (section 5), the console will show warnings on
+first play. **Expect warnings of these kinds, some of them repeated, and zero errors** — that is
+the normal, verified state of a fresh import. All of them are configuration messages, not defects:
 
 | Message | Goes away when you… |
 |---|---|
@@ -748,6 +783,8 @@ configuration messages, not defects:
 | `Unity Analytics could not start` | Same — Analytics rides on the Unity Services link above |
 | `InAppPurchasing: IStoreService.Connect called without a callback…` | Link Unity Services and create the matching IAP products (section 6) |
 | `LootLocker is not configured…` | Enter your LootLocker API key (section 4) |
+| `Leaderboard could not be fetched…`, `Score submission failed…`, `No player exists with that ID` | Same — they are the LootLocker calls that the missing key turns off |
+| `[AdsManager] Google Mobile Ads is not installed, so ads are simulated…` | Install the Google Mobile Ads plugin (section 5) |
 
 If you see an *error* rather than a warning, something really is wrong — that is worth reporting.
 
@@ -781,7 +818,7 @@ offline players costs you sessions for no benefit. Two ways to relax it:
 | A flag, jersey or award image doesn't appear | The filename in `Resources/` doesn't exactly match the JSON value. The engine hides missing sprites silently. |
 | Team colors are gray and the city shows `???` | The `currentTeam` value has no matching `TeamName` in `team_colors.json`. |
 | Leaderboard is empty or errors | LootLocker `apiKey`/`domainKey` not set — see section 4. |
-| Package Manager can't resolve a package on import | No internet on first import — the ten required Unity packages are downloaded from the Unity registry. Reconnect and run **Tools ▸ Quiz Game Template ▸ Apply Project Setup**. |
+| Package Manager can't resolve a package on import | No internet on first import — the nine required Unity packages are downloaded from the Unity registry. Reconnect and run **Tools ▸ Quiz Game Template ▸ Apply Project Setup**. |
 | **Back button and screenshot key do nothing** | *Active Input Handling* has been changed to **Input System Package (New)** on its own. Set Project Settings → Player → **Active Input Handling** back to **Both** (the value this template ships with) and restart the editor. See section 1. |
 | Only a few levels exist | The sample database ships with a handful of placeholder entries. Add your own — one array entry per level. |
 
@@ -797,7 +834,7 @@ offline players costs you sessions for no benefit. Two ways to relax it:
 - Achievements system
 - Player profiles with unlockable pixel-art avatars
 - In-app purchases (coin packs, remove ads)
-- AdMob + LevelPlay ad mediation, rewarded-ad hint system
+- AdMob-ready ad system with a rewarded-ad hint system (plugin installed separately, simulated until then)
 - Local notifications with weekly reminders
 - Full EN/TR localization system
 - Tutorial flow
@@ -828,8 +865,8 @@ value matches the C# default listed here, so the two agree until you change one.
 | What | Where | Ships as |
 |---|---|---|
 | LootLocker API key + domain key | `Assets/QuizGameTemplate/Plugins/LootLockerSDK/Resources/Config/LootLockerConfig.asset`, or the LootLocker settings window | **empty** — leaderboards and friends stay offline until set (section 4) |
-| AdMob app ID | `Assets/QuizGameTemplate/Plugins/GoogleMobileAds/Resources/GoogleMobileAdsSettings.asset` line 15, or *Assets → Google Mobile Ads → Settings* | Google's public **test** app ID |
-| AdMob banner / interstitial / rewarded unit IDs | `Scripts/AdsManager.cs` lines **24, 25, 26** — *code-only* | Google's public **test** unit IDs |
+| AdMob app ID | *Assets → Google Mobile Ads → Settings*, after installing the plugin (section 5) | Google's public **test** app ID, which the plugin sets on install |
+| AdMob banner / interstitial / rewarded unit IDs | `Scripts/AdsManager.cs` lines **37, 38, 39** — *code-only* | Google's public **test** unit IDs |
 | IAP product IDs | `Assets/QuizGameTemplate/Resources/IAPProductCatalog.json` | `coins_1000`, `coins_2500`, `coins_5000`, `coins_10000`, `remove_ads` — these must match the products you create in Google Play / App Store (section 6) |
 | Share / rate link | `Scripts/GameManager.cs` line **126** (`shareLink`, on **GameManager** in `GameScene` and `MainMenu`) | a `com.yourcompany.quiztemplate` placeholder URL |
 | Package name, app name, icon, signing | *Project Settings → Player* | placeholder values (section 9) |
@@ -912,7 +949,7 @@ The language selector is in-game — Settings → language button — and the ch
 | **Method names wired to buttons** | An `OnClick` entry stores the method **name as text**. Renaming the method leaves the button pointing at nothing — again with no error | Rename in code, then reassign that button's `OnClick` entry in the Inspector |
 | **Image filenames under `Resources/`** | They are loaded by name at runtime, never by reference. A typo gives you a blank image and a console warning, not an error | Section 3.3 |
 | **`.meta` files** | They carry the GUIDs that hold every reference in the project together | Never delete or hand-edit them. Move and rename assets **from inside Unity**, which keeps each `.meta` with its file |
-| `QuizGameTemplate/Plugins/` (LootLockerSDK, GoogleMobileAds, ExternalDependencyManager, TextMeshPro) and `Assets/Plugins/` | Third-party SDKs, sitting at the paths their own importers require | Update them through their own importer or package, and leave the folder locations alone |
+| `QuizGameTemplate/Plugins/` (LootLockerSDK, NativeShare) and `Assets/TextMesh Pro/` | Third-party SDKs, sitting at the paths their own importers require | Update them through their own importer or package, and leave the folder locations alone |
 
 ---
 
