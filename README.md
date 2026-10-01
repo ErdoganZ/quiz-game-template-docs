@@ -819,6 +819,7 @@ offline players costs you sessions for no benefit. Two ways to relax it:
 | Team colors are gray and the city shows `???` | The `currentTeam` value has no matching `TeamName` in `team_colors.json`. |
 | Leaderboard is empty or errors | LootLocker `apiKey`/`domainKey` not set — see section 4. |
 | Package Manager can't resolve a package on import | No internet on first import — the nine required Unity packages are downloaded from the Unity registry. Reconnect and run **Tools ▸ Quiz Game Template ▸ Apply Project Setup**. |
+| A "LootLocker Update Available" window appears | The bundled LootLocker SDK checks GitHub for a newer release once a day. It is a notice, not an error, and *Update Now* only opens the release page in your browser. Choose **Skip This Version** or **Never Notify**. The template was built and tested with v8.1.1; if you want a newer SDK, replace `Plugins/LootLockerSDK/` with it and retest. |
 | **Back button and screenshot key do nothing** | *Active Input Handling* has been changed to **Input System Package (New)** on its own. Set Project Settings → Player → **Active Input Handling** back to **Both** (the value this template ships with) and restart the editor. See section 1. |
 | Only a few levels exist | The sample database ships with a handful of placeholder entries. Add your own — one array entry per level. |
 
